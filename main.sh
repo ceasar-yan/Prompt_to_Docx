@@ -13,12 +13,13 @@ cursorR() { # R = Reveal
   tput cnorm
 }
 
-toDoc() { # convert gemini's respond to docx  file
+toDocx() { # convert gemini's respond to docx  file
   local content="$1"
   local fileName="$2"
 
   mkdir -p docxFiles/
   
+  echo "$content" | pandoc --from markdown -o "docxFiles/${fileName}.docx";
   echo -e "\n${BLUE}'${fileName}.docx' ${GREEN}was created successfully${NC}"
 }
 
@@ -26,8 +27,8 @@ sendPrompt() {
   local getPrompt="$1"
   local fileName="$2"
   local response
-  local reply
   local payload
+  local reply
 
   if [[ -z "$GEMINI_API_KEY" ]]; then
     echo "Error: GEMINI_API_KEY environment variable is not set." >&2
@@ -76,16 +77,36 @@ while true; do
     read -rep "${BLUE}Enter Prompt: ${NC}" prompt;
     if [[ "${prompt}" == "exit" ]]; then break; fi
 
-    sendPrompt "${prompt}"
+    # Build refined prompt template
+    read -r -d '' refinedPrompt << EOF
+You are a direct content generator. Follow these instructions strictly:
 
-    # read -e -p "${GREEN}Enter File Name: ${NC}" fileName;
-    # if [[ "${fileName}" == "exit" ]]; then break; fi
+[SYSTEM INSTRUCTIONS]
+1. Do NOT speak conversationally (no greetings, intros, or meta-commentary).
+2. Answer directly and concisely based on the user's request.
+3. Do NOT include markdown markers like [start], [end], or placeholder guides (e.g., grading, author names). If missing, generate realistic default data.
+4. Output the response pre-formatted for conversion into Microsoft Word (.docx). Use clean Markdown styling (clear headings, bullet points, and tables).
+
+[USER PROMPT]
+$prompt
+EOF
+
+    catchLocalVar=$(sendPrompt "${refinedPrompt}")
+    echo -e "${GREEN}Gemini:${NC} ${catchLocalVar}\n"
+
+
+    read -e -p "${BLUE}Do you want to turn Gemini's Respond to Docx file? (yes or else): ${NC}" convert;
+    if [[ "${convert}" == "yes" ]]; then 
+      read -e -p "${BLUE}Document's Name: ${NC}" fileName;
+
+      toDocx "${catchLocalVar}" "${fileName}"
+    fi
+
   done
   if [[ "${prompt}" == "exit" ]]; then break; fi
 
-  toDoc "$prompt" "$fileName"
 
-  echo -e "Press ENTER to reload..."
+  echo -e "\nPress ENTER to reload..."
   cursorH; read -s; cursorR
 
   clear
