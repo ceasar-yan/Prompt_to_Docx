@@ -66,7 +66,7 @@ clear
 while true; do
   # echo -e "${BLUE}$(figlet -f slant 'Prompt to Docx')${NC}"; # Slant duh
   echo -e "${BLUE}$(figlet 'Prompt to Docx')${NC}" # Plain but cool
-  echo -e "${RED}enter 'exit' to quit the script${NC}"
+  echo -e "${RED}enter 'exit' to quit the script${NC}\n"
 
   while true; do
     # Redeclaring Colors for read command
@@ -92,7 +92,7 @@ $prompt
 EOF
 
     catchLocalVar=$(sendPrompt "${refinedPrompt}")
-    echo -e "${GREEN}Gemini:${NC} ${catchLocalVar}\n"
+    echo -e "${GREEN}Gemini:${NC} ${catchLocalVar}\n" | less -RX
 
 
     read -e -p "${BLUE}Do you want to turn Gemini's Respond to Docx file? (yes or else): ${NC}" convert;
@@ -100,6 +100,8 @@ EOF
       read -e -p "${BLUE}Document's Name: ${NC}" fileName;
 
       toDocx "${catchLocalVar}" "${fileName}"
+      echo -e "\n"
+      break
     fi
 
   done
@@ -108,7 +110,6 @@ EOF
 
   echo -e "\nPress ENTER to reload..."
   cursorH; read -s; cursorR
-
   clear
 
 done
